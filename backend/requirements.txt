@@ -1,0 +1,8 @@
+Flask
+Flask-CORS
+tweepy
+textblob
+nltk
+pymongo
+python-dotenv
+gunicorn

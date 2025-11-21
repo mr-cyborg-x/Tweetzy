@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter Sentiment Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="min-h-screen bg-[var(--bg-primary)]">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        Twitter Sentiment Analysis
+                    </h1>
+                    <p class="text-sm text-gray-600">
+                        Real-time sentiment detection powered by AI
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="card p-6 mb-8">
+            <form id="searchForm" class="flex gap-3">
+                <input
+                    type="text"
+                    id="keywordInput"
+                    placeholder="Enter hashtag or keyword (e.g., #AI, #ClimateChange)"
+                    class="input-field flex-1"
+                />
+                <button
+                    type="submit"
+                    id="searchButton"
+                    class="btn-primary"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span id="searchBtnText">Search & Analyze</span>
+                </button>
+            </form>
+            <p class="text-xs text-gray-500 mt-3">
+                Search for tweets by hashtag or keyword. The app will analyze sentiment and store results in real-time.
+            </p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="card p-4 mb-6 border-l-4 border-red-500 bg-red-50 hidden">
+            <div class="flex items-center gap-2 text-red-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="errorText" class="text-sm font-medium"></span>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden">
+            <div class="space-y-6 mb-8">
+                <!-- Stats Skeleton -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6"><div class="h-4 bg-gray-200 rounded w-20 mb-4 animate-pulse"></div><div class="h-8 bg-gray-200 rounded w-16 mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-24 animate-pulse"></div></div>
+                    <div class="card p-6"><div class="h-4 bg-gray-200 rounded w-20 mb-4 animate-pulse"></div><div class="h-8 bg-gray-200 rounded w-16 mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-24 animate-pulse"></div></div>
+                    <div class="card p-6"><div class="h-4 bg-gray-200 rounded w-20 mb-4 animate-pulse"></div><div class="h-8 bg-gray-200 rounded w-16 mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-24 animate-pulse"></div></div>
+                </div>
+                <!-- Tweets Skeleton -->
+                <div class="space-y-3">
+                    <div class="card p-4"><div class="flex gap-3"><div class="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 animate-pulse"></div><div class="flex-1"><div class="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-full mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div></div></div></div>
+                    <div class="card p-4"><div class="flex gap-3"><div class="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 animate-pulse"></div><div class="flex-1"><div class="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-full mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div></div></div></div>
+                    <div class="card p-4"><div class="flex gap-3"><div class="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 animate-pulse"></div><div class="flex-1"><div class="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-full mb-2 animate-pulse"></div><div class="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div></div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" class="hidden">
+            <!-- Sentiment Analysis Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Sentiment Analysis</h2>
+                    <p id="analyzedCount" class="text-sm text-gray-600">Analyzed 0 tweets</p>
+                </div>
+                <button
+                    id="refreshButton"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Positive -->
+                <div class="stat-card">
+                    <div class="flex items-start justify-between mb-3">
+                        <span class="text-sm font-medium text-gray-600">Positive</span>
+                        <span class="text-xl text-green-500">↗</span>
+                    </div>
+                    <div class="mb-2">
+                        <div id="positiveCount" class="text-3xl font-bold text-green-600">0</div>
+                    </div>
+                    <div id="positivePercent" class="text-sm text-gray-500">0% of total</div>
+                </div>
+                <!-- Negative -->
+                <div class="stat-card">
+                    <div class="flex items-start justify-between mb-3">
+                        <span class="text-sm font-medium text-gray-600">Negative</span>
+                        <span class="text-xl text-red-500">↘</span>
+                    </div>
+                    <div class="mb-2">
+                        <div id="negativeCount" class="text-3xl font-bold text-red-600">0</div>
+                    </div>
+                    <div id="negativePercent" class="text-sm text-gray-500">0% of total</div>
+                </div>
+                <!-- Neutral -->
+                <div class="stat-card">
+                    <div class="flex items-start justify-between mb-3">
+                        <span class="text-sm font-medium text-gray-600">Neutral</span>
+                        <span class="text-xl text-gray-500">—</span>
+                    </div>
+                    <div class="mb-2">
+                        <div id="neutralCount" class="text-3xl font-bold text-gray-600">0</div>
+                    </div>
+                    <div id="neutralPercent" class="text-sm text-gray-500">0% of total</div>
+                </div>
+            </div>
+
+            <!-- Recent Tweets -->
+            <div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Recent Tweets</h3>
+                <div id="tweetsList" class="space-y-0">
+                    <!-- Tweets will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="card p-12 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Start Analyzing Tweets</h3>
+            <p class="text-gray-600 max-w-md mx-auto">
+                Enter a hashtag or keyword above to analyze sentiment from Twitter in real-time
+            </p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
