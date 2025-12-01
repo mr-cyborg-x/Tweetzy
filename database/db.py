@@ -14,7 +14,7 @@ def get_db():
         client.admin.command('ping')
         print("Connected to MongoDB Atlas")
         return client.get_default_database()
-    except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+    except Exception as e:
         print(f"MongoDB connection failed: {e}")
         return None
 
